@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Rooster - Gestionnaire d'exercices</title>
+        <meta http-equiv="x-ua-compatible" content="ie=9">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <HTA:APPLICATION
+            ID="Rooster"
+            APPLICATIONNAME="Rooster"
+            VERSION="1.0.0"
+            CAPTION="yes"
+            BORDER=""
+            ICON="bin/rooster.ico"
+            SHOWINTASKBAR="yes"
+            SINGLEINSTANCE="no"
+            SYSMENU="yes"
+            WINDOWSTATE="no"
+            SCROLL="no"
+            SCROLLFLAT="no"
+            INNERBORDER="no"
+            SELECTION="no"
+            MAXIMIZEBUTTON="yes"
+            MINIMIZEBUTTON="yes"
+            NAVIGABLE="no"
+            CONTEXTMENU="no"
+            BORDERSTYLE="yes">
+        <style>
+            #menu {position:absolute;left:0;top:0;width:110%;height:25px; 
+                    padding-top:2px; font:normal 9pt Microsoft Sans Serif;z-index:100;}
+            #dropmenu {position:absolute; font:normal 9pt Microsoft Sans Serif}
+            .item{ line-height: 25px; padding : 6px 15px;}
+            div.subitem { line-height: 15px; padding : 6px 20px;}
+            hr.subitem  { margin : 0 0 0 20px }
+        </style>
+    </head>
+    <body>
+        <!-- MENU --><div id="menu"></div><span id="dropmenu"></span><!-- MENU -->
+        <script language="VBScript">
+            ' Variable du contenu du fichier config.ini 
+            Dim contentIni
+
+            // https://vb.developpez.com/faq/vbs?page=Shell-wshShell
+            Set WshShell =  CreateObject("Wscript.Shell")
+            Set objFSO = CreateObject("Scripting.FileSystemObject")
+            
+            Function VBCloneExercice(repo)
+                'Création du dossier "src" 
+                If Not objFSO.FolderExists(current_directory&"/src") Then
+                    objFSO.CreateFolder(current_directory&"/src")
+                End If
+
+                // clonage du git si non existant
+                If Not objFSO.FolderExists(current_directory&"/src/.git") Then
+                    WshShell.Run "cmd /c cd src & git clone "&repo&" ./", 9, true
+                End If
+            End Function
+
+            Function VBCommitExercice(repo, comment)
+                WshShell.Run "cmd /c cd src & git add . & git commit -m "&comment&" & git remote rm origin & git remote add origin "&repo&" & git push -u origin master",0, true
+            End Function
+
+            Function VBReadIni()  
+                Set iniFile = objFSO.OpenTextFile(directory_bin+"/config.ini", 1)                
+                Dim iniText
+                ' lecture du fichier ini et fermeture 
+                contentIni = iniFile.ReadAll
+                iniFile.Close
+            End Function
+
+            Function VBGetKey(section,key) 
+                Set reg = New RegExp
+                Set regSub = New RegExp
+                reg.IgnoreCase = True
+                regSub.IgnoreCase = True
+                ' lecture de la clé spécifique de la section 
+                reg.Pattern = "\[" & section & "\]([^\[]+)":regSub.Pattern = "\b" & key & " *= *([^;\f\n\r\t\v]+)"
+                On Error Resume Next
+                VBGetKey = regSub.Execute(reg.Execute(contentIni).Item(0).SubMatches(0)).Item(0).SubMatches(0)
+                If Err.Number = 5 then VBGetKey = False
+            End Function
+
+
+            Sub about 
+                msgbox "Rooster By Cyrhades, Copyright 2019"&vbCRLF&vbCRLF&"Version : "&Rooster.VERSION, vbOKOnly + vbInformation, "A propos" 
+            end sub             
+        </script>
+
+        <script type="text/javascript">
+            var current_directory = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('\\'));
+            var directory_bin = current_directory+'/bin';
+
+            /**
+             * Vérifier que l'application est utilisable
+             *
+             * il doit y avoir :
+             *   - le dossier bin 
+             *   - le fichier config 
+             */
+           
+            /**
+             * charger le fichier de langue
+             */
+            
+            /**
+             * charger le fichier de config
+             */
+            VBReadIni();
+
+            /**
+             * Affichage du menu
+             */
+            var subMenuEnable = false;
+            var menuItems = [
+                {
+                    name : 'action',
+                    text : 'Actions',
+                    submenu : [
+                        {text: 'Charger un repository distant', functionName : 'loadRemoteRepo' },
+                        {text: 'Sauvegarder en local', functionName : 'saveLocalRepo' },
+                        'separator',
+                        {text: 'Fermer', functionName : 'closeRooster' }
+                    ]
+                },
+                
+                {
+                    name : 'paramaters',
+                    text : 'Parametres',
+                    submenu : [
+                        {text: 'Docker', functionName : 'dockerSettings' },
+                        {text: 'Preferences', functionName : 'preferences' },
+                    ]
+                },
+                {   
+                    name : 'help',
+                    text : 'Aide',
+                    submenu : [
+                        {text: 'Aide', functionName : 'help' },
+                        {text: 'A propos de Rooster', functionName : 'about' },
+                    ]
+                },
+            ];
+
+            document.getElementById('menu').style.backgroundColor = VBGetKey('MENU','bg_color')
+            document.getElementById('menu').style.color = VBGetKey('MENU','text_color')
+            
+            document.getElementById('dropmenu').style.backgroundColor = VBGetKey('MENU','bg_color')
+            document.getElementById('dropmenu').style.color = VBGetKey('MENU','text_color')
+
+
+            menuItems.forEach(function(item) {
+                var element = document.createElement('span');
+                element.id = item.name;
+                element.className = "item";
+                element.textContent = item.text;
+                element.setAttribute('submenu', JSON.stringify(item.submenu) );
+                document.getElementById('menu').appendChild(element);
+            })
+
+            Array.prototype.slice.call(document.querySelectorAll('.item')).forEach(function(element) {
+                element.addEventListener('mouseover', function(event) {
+                    event.currentTarget.style.backgroundColor = VBGetKey('MENU','hover_bg_color') 
+                    event.currentTarget.style.color = VBGetKey('MENU','hover_text_color') 
+                    event.currentTarget.style.border = '1px solid '+ VBGetKey('MENU','hover_border_color') 
+                    if(subMenuEnable) createSubMenu(event);
+                })
+
+                element.addEventListener('mouseleave', function(event) {
+                    event.currentTarget.style.backgroundColor = VBGetKey('MENU','bg_color') 
+                    event.currentTarget.style.color = VBGetKey('MENU','text_color') 
+                    event.currentTarget.style.border = '1px solid '+ VBGetKey('MENU','border_color') 
+                })
+
+                element.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    createSubMenu(event);
+                })
+            });
+
+            function createSubMenu(event)
+            {
+                subMenuEnable = true;
+                document.getElementById('dropmenu').innerHTML = '';
+                document.getElementById('dropmenu').style.top = document.getElementById('menu').offsetHeight+1+"px";
+                document.getElementById('dropmenu').style.left = event.currentTarget.offsetLeft+"px";
+                // Afficher le sous menu
+                var subMenuItems = JSON.parse(event.currentTarget.getAttribute('submenu'));
+                subMenuItems.forEach(function(subItem) {
+                    if(subItem == 'separator') {
+                        var element = document.createElement('hr');
+                        element.className = "subitem";
+                        element.style.border = 'none'
+                        element.style.borderBottom = '1px solid '+ VBGetKey('MENU','separator_color') 
+                        document.getElementById('dropmenu').appendChild(element);
+                    } else {
+                        var element = document.createElement('div');
+                        element.className = "subitem";
+                        element.textContent = subItem.text;
+                        element.style.backgroundColor = VBGetKey('MENU','bg_color') 
+                        element.style.color = VBGetKey('MENU','text_color') 
+                        element.style.border = '1px solid '+ VBGetKey('MENU','border_color') 
+                        element.setAttribute('callback', subItem.functionName );
+                        document.getElementById('dropmenu').appendChild(element);
+                        // gérer les icone avec fontawesome
+                        if(typeof subItem.icon != 'undefined') {
+                            element.innerHtml = '<i class="'+subItem.icon+'"></i>'+subItem.text;
+                        }
+                        //
+                        element.addEventListener('mouseover', function(event) {
+                            event.currentTarget.style.backgroundColor = VBGetKey('MENU','hover_bg_color') 
+                            event.currentTarget.style.color = VBGetKey('MENU','hover_text_color') 
+                            event.currentTarget.style.border = '1px solid '+ VBGetKey('MENU','hover_border_color') 
+                        })
+                        element.addEventListener('mouseleave', function(event) {
+                            event.currentTarget.style.backgroundColor = VBGetKey('MENU','bg_color') 
+                            event.currentTarget.style.color = VBGetKey('MENU','text_color') 
+                            event.currentTarget.style.border = '1px solid '+ VBGetKey('MENU','border_color') 
+                        })
+                        
+                        element.addEventListener('click', function(event) {
+                            // On ne stop pas la propagation pour que le menu se ferme automatiquement
+                            //event.stopPropagation();
+                            eval(event.currentTarget.getAttribute('callback')+'()');
+                        })
+                    }
+                })
+            }
+
+            document.addEventListener('click', function(event) {
+                subMenuEnable = false;
+                document.getElementById('dropmenu').innerHTML = '';
+            })
+            
+
+            // On met la fenetre au bonnes dimensions 
+            window.resizeTo(VBGetKey('WINDOW','width'), VBGetKey('WINDOW','height'));
+            // On met la fenetre a bonne position 
+            window.moveTo(VBGetKey('WINDOW','left'), VBGetKey('WINDOW','top'));
+
+            // juste avant la fermeture du programme 
+            window.onbeforeunload = function() { 
+                // taille de la fenetre
+                //alert(window.outerWidth+' '+window.outerHeight)
+                // position de la fenetre
+                //alert(window.top.screenLeft+' '+window.top.screenTop)
+            };
+            
+            // Exemple de clonage d'un exercice sera stocké dans le dossier src/
+            //VBCloneExercice('https://github.com/Cyrhades/youpi-exercice');
+
+
+            /**
+             * Les fonctions du menu
+             */ 
+            function closeRooster() {
+                window.close();
+            } 
+    
+        </script>
+    </body>
+</html>
