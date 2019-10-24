@@ -7,6 +7,7 @@
         <HTA:APPLICATION
             ID="Rooster"
             APPLICATIONNAME="Rooster"
+            AUTHOR="Cyrhades"
             VERSION="1.0.0"
             CAPTION="yes"
             BORDER=""
@@ -97,10 +98,6 @@
             Sub VBOpenHTA(fileHTA)
                 WshShell.Run(fileHTA)
             End Sub
-
-            Sub about 
-                msgbox "Rooster By Cyrhades, Copyright 2019"&vbCRLF&vbCRLF&"Version : "&Rooster.VERSION, vbOKOnly + vbInformation, "A propos" 
-            end sub   
         </script>
 
         <script type="text/javascript">
@@ -373,116 +370,161 @@
 
             }
 
+            function about()
+            {
+                if(popupOpened.indexOf('about') == -1) {  
+                
+                    var content = '<img src="'+directory_bin+'/logo.png" width="190" height="190" />';
+                    content += '<div style="position:absolute;left:240px;top:30px;">';
+                        content += '<h1>ROOSTER</h1> <strong>version:'+Rooster.version+'</strong>'
+                        content += '<br /> <strong>Auteur: Cyrhades</strong>'
+                        content += '<button style="position:absolute;left:180px;top:130px;" class="close">OK</button>';
+                    content +='</div>';
+
+                    popupOpened.push('about');
+                    var popup = winPopUp({
+                        //icon : directory_bin+'/rooster.ico',
+                        //title : 'Rooster - A propos',
+                        id : 'about', 
+                        content : content,
+                        //closable: true,
+                        draggable: false,
+                        width : 480, 
+                        height : 200,
+                        position : { top : 150, left: 90 }
+                    });
+
+                    popup.querySelector(".close").addEventListener("click", function() {
+                        popupOpened.splice(popupOpened.indexOf(popup.id),1);
+                        popup.parentNode.removeChild(popup);
+                    });
+                }
+            }
+
             function loadRemoteRepo()
             {
                 //if(popupOpened.indexOf('loadRemoteRepo') == -1) {  
                 if(popupOpened.length == 0) {
                 
-                    content = '<input type="text" />';
+                    var content = '<input type="text" style="width:580px;height:25px;" />';
                     content += "<button>Charger l'exercicce</button>";
 
                     popupOpened.push('loadRemoteRepo');
-                    var popup = winPopUp(
-                        'Rooster - Chargement d\'un repository',
-                        'loadRemoteRepo', 
-                        content,
-                        600, 
-                        200
-                    );
+                    var popup = winPopUp({
+                        icon : directory_bin+'/rooster.ico',
+                        title : 'Rooster - Chargement d\'un repository',
+                        id : 'loadRemoteRepo', 
+                        content : content,
+                        closable: true,
+                        draggable: true,
+                        width : 600, 
+                        height : 200,
+                        position : { top : 50, left: 30 }
+                    });
                 }
 
             }
     
-            function winPopUp(title, id, content, width, height)
+            function winPopUp(winInfos)
             {
                 var popup = document.createElement('div');
-                popup.id = id;
-                popup.style.width = width+"px"
-                popup.style.height = height +"px"
+                popup.id = winInfos.id;
+                popup.style.width = winInfos.width+"px"
+                popup.style.height = winInfos.height +"px"
                 popup.style.border = '1px solid '+ VBGetKey('POPUP','border_color') 
                 popup.style.background = VBGetKey('POPUP','background_color') 
                 popup.style.zIndex = 1002 
                 popup.style.position = "absolute" 
                 popup.style.boxShadow = "0px 0px 40px #C2C2C2";
-                popup.style.top = "50px";
-                popup.style.left = "30px" 
+                popup.style.top = winInfos.position.top+"px";
+                popup.style.left = winInfos.position.left+"px" 
                 popup.setAttribute('draggable',"true")
 
-                var popupTitle = document.createElement('div');
-                popupTitle.style.padding = "7px";
-                popupTitle.style.font = "normal 9pt Microsoft Sans Serif";
-                
-                var popupIconTitle = document.createElement('img');
-                popupIconTitle.src = directory_bin+'/rooster.ico'
-                popupIconTitle.width = 16
-                popupIconTitle.height = 16
-                popupIconTitle.style.marginRight = "5px"
-                popupIconTitle.style.verticalAlign = "middle"
-                popupTitle.appendChild(popupIconTitle);
-
-                popupTitle.innerHTML += title
-                popup.appendChild(popupTitle);
-
-                var popupClose = document.createElement('span');
-                popupClose.innerHTML = '<svg fill="#333333" width=10 height=10 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32.526 32.526" style="enable-background:new 0 0 32.526 32.526;" xml:space="preserve"><polygon points="32.526,2.828 29.698,0 16.263,13.435 2.828,0 0,2.828 13.435,16.263 0,29.698 2.828,32.526 16.263,19.091 29.698,32.526 32.526,29.698 19.091,16.263 "/></svg>'
-                popupClose.style.position = "absolute"
-                popupClose.style.top = "0px"
-                popupClose.style.right = "0px"
-                popupClose.style.padding = "8px 12px"
-                popupTitle.appendChild(popupClose);
-                
-                document.body.appendChild(popup);
-
-                // On ne souhaite pas déplacer la fenetre quand on clique sur le bouton close
-                popupClose.addEventListener("mousemove", function(e) {e.stopPropagation();});
-                popupClose.addEventListener("mouseover", function(e) {                    
-                    e.currentTarget.style.backgroundColor = "#e81123";
-                    e.currentTarget.querySelector('svg').setAttribute('fill','#FFFFFF')
-                });
-                popupClose.addEventListener("mouseleave", function(e) {
-                    e.currentTarget.style.backgroundColor = "#FFFFFF";
-                    e.currentTarget.querySelector('svg').setAttribute('fill','#333333')
-                });
-                popupClose.addEventListener("click", function(e) {                    
-                    popupOpened.splice(popupOpened.indexOf(popup.id),1);
-                    popup.parentNode.removeChild(popup);
-                });
-
-                // Déplacement de la fenetre
-                popupTitle.addEventListener("mousedown", function(e) {
-                    var popup = e.currentTarget.parentNode;
-                    draggable = popup;
-                    popup.setAttribute("data-posCursorX", e.clientX-parseInt(popup.style.left))
-                    popup.setAttribute("data-posCursorY", e.clientY-parseInt(popup.style.top))
-                });
-
-
-                popupTitle.addEventListener("mouseup", function(e) {
-                    draggable = null;
-                });
-
-                document.addEventListener("mouseuup", function(e) {
-                    draggable = null;
-                });
-                
-                document.addEventListener("mousemove", function(e) {
-                    if (window.event.button === 1 && draggable !== null) {
-                        var popup = draggable; //e.currentTarget.parentNode;
-                        var newPosX = e.clientX-popup.getAttribute("data-posCursorX")
-                        var newPosY = e.clientY-popup.getAttribute("data-posCursorY")
-                        popup.style.left = newPosX+"px"
-                        popup.style.top = newPosY+"px"
-
-                        if(parseInt(popup.style.left) <= 0) popup.style.left = 0;
-                        if(parseInt(popup.style.top) <= 28) popup.style.top = 28+"px";
-
-                        if(parseInt(popup.style.left)+parseInt(popup.style.width) >= window.innerWidth) 
-                            popup.style.left = window.innerWidth-parseInt(popup.style.width)+"px";
-
-                        if(parseInt(popup.style.top)+parseInt(popup.style.height) >= window.innerHeight) 
-                            popup.style.top = window.innerHeight-parseInt(popup.style.height)+"px";
+                if(typeof winInfos.title != 'undefined' || typeof winInfos.icon != 'undefined') {
+                    var popupTitle = document.createElement('div');
+                    popupTitle.style.padding = "7px";
+                    popupTitle.style.font = "normal 9pt Microsoft Sans Serif";
+                    
+                    if(typeof winInfos.icon != 'undefined' && winInfos.icon != false && winInfos.icon != null && winInfos.icon != "none") {
+                        var popupIconTitle = document.createElement('img');
+                        popupIconTitle.src = winInfos.icon
+                        popupIconTitle.width = 16;
+                        popupIconTitle.height = 16;
+                        popupIconTitle.style.marginRight = "5px";
+                        popupIconTitle.style.verticalAlign = "middle";
+                        popupTitle.appendChild(popupIconTitle);
                     }
-                });
+                    if(typeof winInfos.title != 'undefined' && winInfos.title != false 
+                        && winInfos.title != null && winInfos.title != "none" && winInfos.title != "") {
+                        popupTitle.innerHTML += winInfos.title;
+                    }
+                    popup.appendChild(popupTitle);
+
+                    if (typeof winInfos.draggable != 'undefined' && winInfos.draggable == true) {
+                        // Déplacement de la fenetre
+                        popupTitle.addEventListener("mousedown", function(e) {
+                            var popup = e.currentTarget.parentNode;
+                            draggable = popup;
+                            popup.setAttribute("data-posCursorX", e.clientX-parseInt(popup.style.left))
+                            popup.setAttribute("data-posCursorY", e.clientY-parseInt(popup.style.top))
+                        });
+
+
+                        popupTitle.addEventListener("mouseup", function(e) {
+                            draggable = null;
+                        });
+
+                        document.addEventListener("mouseuup", function(e) {
+                            draggable = null;
+                        });
+                        
+                        document.addEventListener("mousemove", function(e) {
+                            if (window.event.button === 1 && draggable !== null) {
+                                var popup = draggable; //e.currentTarget.parentNode;
+                                var newPosX = e.clientX-popup.getAttribute("data-posCursorX")
+                                var newPosY = e.clientY-popup.getAttribute("data-posCursorY")
+                                popup.style.left = newPosX+"px"
+                                popup.style.top = newPosY+"px"
+
+                                if(parseInt(popup.style.left) <= 0) popup.style.left = 0;
+                                if(parseInt(popup.style.top) <= 28) popup.style.top = 28+"px";
+
+                                if(parseInt(popup.style.left)+parseInt(popup.style.width) >= window.innerWidth) 
+                                    popup.style.left = window.innerWidth-parseInt(popup.style.width)+"px";
+
+                                if(parseInt(popup.style.top)+parseInt(popup.style.height) >= window.innerHeight) 
+                                    popup.style.top = window.innerHeight-parseInt(popup.style.height)+"px";
+                            }
+                        });
+                    } // fin condition draggable
+                }
+
+
+                if (typeof winInfos.closable != 'undefined' && winInfos.closable == true) {
+                    var popupClose = document.createElement('span');
+                    popupClose.innerHTML = '<svg fill="#333333" width=10 height=10 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32.526 32.526" style="enable-background:new 0 0 32.526 32.526;" xml:space="preserve"><polygon points="32.526,2.828 29.698,0 16.263,13.435 2.828,0 0,2.828 13.435,16.263 0,29.698 2.828,32.526 16.263,19.091 29.698,32.526 32.526,29.698 19.091,16.263 "/></svg>';
+                    popupClose.style.position = "absolute";
+                    popupClose.style.top = "0px";
+                    popupClose.style.right = "0px";
+                    popupClose.style.padding = "8px 12px";
+                    popupTitle.appendChild(popupClose);
+
+                    // On ne souhaite pas déplacer la fenetre quand on clique sur le bouton close
+                    popupClose.addEventListener("mousemove", function(e) {e.stopPropagation();});
+                    popupClose.addEventListener("mouseover", function(e) {                    
+                        e.currentTarget.style.backgroundColor = "#e81123";
+                        e.currentTarget.querySelector('svg').setAttribute('fill','#FFFFFF')
+                    });
+                    popupClose.addEventListener("mouseleave", function(e) {
+                        e.currentTarget.style.backgroundColor = "#FFFFFF";
+                        e.currentTarget.querySelector('svg').setAttribute('fill','#333333')
+                    });
+                    popupClose.addEventListener("click", function(e) {                    
+                        popupOpened.splice(popupOpened.indexOf(popup.id),1);
+                        popup.parentNode.removeChild(popup);
+                    });
+                }
+                document.body.appendChild(popup);
 
 
                 /**
@@ -491,7 +533,7 @@
                 var popupContent = document.createElement('div');
                 popupContent.style.padding = "7px";
                 popupContent.style.font = "normal 9pt Microsoft Sans Serif";
-                popupContent.innerHTML = content;
+                popupContent.innerHTML = winInfos.content;
                 popup.appendChild(popupContent);
                 
 
