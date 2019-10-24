@@ -36,6 +36,12 @@
         </style>
     </head>
     <body>
+        <script type="text/javascript">
+            // On met la fenetre au bonnes dimensions 
+            window.resizeTo(0, 0);
+            // On met la fenetre a bonne position 
+            window.moveTo(-500, -500);
+        </script>
         <!-- MENU --><div id="menu"></div><span id="dropmenu"></span><!-- MENU -->
         <script language="VBScript">
             ' Variable du contenu du fichier config.ini 
@@ -378,7 +384,7 @@
                     content += '<div style="position:absolute;left:240px;top:30px;">';
                         content += '<h1>ROOSTER</h1> <strong>version:'+Rooster.version+'</strong>'
                         content += '<br /> <strong>Auteur: Cyrhades</strong>'
-                        content += '<button style="position:absolute;left:180px;top:130px;" class="close">OK</button>';
+                        content += '<button style="position:absolute;left:180px;top:130px;" class="button close">OK</button>';
                     content +='</div>';
 
                     popupOpened.push('about');
@@ -398,6 +404,8 @@
                         popupOpened.splice(popupOpened.indexOf(popup.id),1);
                         popup.parentNode.removeChild(popup);
                     });
+
+                    updateInterface(popup);
                 }
             }
 
@@ -540,6 +548,28 @@
                 return popup;
             }
    
+            // Permet d'associer le style aux différent élements de l'interface
+            function updateInterface(element)
+            {
+                // Les boutons
+                var buttons = Array.prototype.slice.call(element.querySelectorAll('.button'));
+                buttons.forEach(function(element) {
+                    element.style.backgroundColor = VBGetKey('BUTTON','bg_color') 
+                    element.style.color = VBGetKey('BUTTON','text_color') 
+                    element.style.border = '1px solid '+ VBGetKey('BUTTON','border_color') 
+                    element.addEventListener('mouseover', function() {
+                        element.style.backgroundColor = VBGetKey('BUTTON','hover_bg_color') 
+                        element.style.color = VBGetKey('BUTTON','hover_text_color') 
+                        element.style.border = '1px solid '+ VBGetKey('BUTTON','hover_border_color')
+                    });
+
+                    element.addEventListener('mouseleave', function() {
+                        element.style.backgroundColor = VBGetKey('BUTTON','bg_color') 
+                        element.style.color = VBGetKey('BUTTON','text_color') 
+                        element.style.border = '1px solid '+ VBGetKey('BUTTON','border_color') 
+                    });
+                });
+            }
         </script>
     </body>
 </html>
